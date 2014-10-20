@@ -1,4 +1,3 @@
-from django.contrib.sessions.backends.db import SessionStore
 from django.shortcuts import render
 from django.http import HttpResponse
 
@@ -14,9 +13,6 @@ def handle_callback(request):
     content = json.loads(resp.content)
 
     request.session['access_token'] = content.get('access_token')
-
+    request.session['target'] = content.get('instance_url')
     return HttpResponse('success')
-
-def check_id(request):
-    return HttpResponse(request.session.get('access_token'))
 
