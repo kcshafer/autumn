@@ -17,7 +17,7 @@ def soql(request):
     params = {'q' : request.POST.get('query')}
     #url = request.session.get('target') + '/services/data/v20.0/query'
     url = 'https://na17.salesforce.com/services/data/v20.0/query'
-    response = requests.post(url, headers=header, params=params)
+    response = requests.get(url, headers=header, params=params)
 
     print response.content
     records = json.loads(response.content)
