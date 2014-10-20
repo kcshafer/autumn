@@ -67,7 +67,10 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
-
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
+    'autumn.authentication.context.is_authenticated'
+)
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'

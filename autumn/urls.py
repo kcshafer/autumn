@@ -4,6 +4,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 from authentication import views as auth_views
+from views import home
 
 urlpatterns = patterns('',
     # Examples:
@@ -12,9 +13,11 @@ urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
 
+    url(r'^logout/', auth_views.logout),
     url(r'^callback/', auth_views.handle_callback),
-
+    url(r'^home/', home),
+    
     url(r'^data/', include('autumn.data.urls')), # admin app
 
-    url(r'', auth_views.authentication_landing),
+    url(r'login/', auth_views.authentication_landing),
 )
