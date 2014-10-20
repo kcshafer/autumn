@@ -18,5 +18,5 @@ def handle_callback(request):
     return HttpResponse('success')
 
 def check_id(request):
-    return HttpResponse(request.session.get(access_token))
+    return HttpResponse(request.session.get('access_token'))
 
