@@ -4,7 +4,7 @@ from django.http import HttpResponse
 import requests
 
 def handle_callback(request):
-    code = request.GET('code')
+    code = request.GET.get('code')
     redirect_uri = 'https://ec2-54-69-219-197.us-west-2.compute.amazonaws.com/codecallback'
     client_secret = '5669610576465531909'
     client_id = '3MVG9xOCXq4ID1uEEA_ToSIsz_uSYzfrt3vmYtibRmHQmm6xWh_fqEsiY542IoYRzpuYpIBCThY.8IwR5CgM.'
