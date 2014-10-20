@@ -13,5 +13,5 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
 
     url(r'^callback/', auth_views.handle_callback),
-    url(r'^codecallback/', auth_views.handle_code_callback),
+
 )
