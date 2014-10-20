@@ -1,7 +1,9 @@
 <html>
     <head>
+        {% include 'common/header.html' %}
     </head>
     <body>
+        {% include 'common/navigation.html' %}
         <form action="/data/soql/" method="post">
             {% csrf_token %}
             {{ query_form }}
