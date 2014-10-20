@@ -4,6 +4,10 @@ from django.http import HttpResponse
 import json
 import requests
 
+def authentication_landing(request):
+    return render(request, 'authentication/landing.html')
+
+
 def handle_callback(request):
     code = request.GET.get('code')
     redirect_uri = 'https://ec2-54-69-219-197.us-west-2.compute.amazonaws.com/callback'
