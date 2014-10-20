@@ -14,3 +14,4 @@ def handle_callback(request):
 
 def handle_code_callback(request):
     print request
+    return HttpResponse('success again')
