@@ -5,21 +5,33 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 from autumn.data.forms import QueryForm
+from autumn.frisbee import Frisbee 
 
 def query(request):
     query_form = QueryForm()
+    frisbee = Frisbee(request)
+    sobj_resp = frisbee.get_sobjects()
 
-    return render(request, 'data/query_form.html', {'query_form': query_form})
+    sobjects = []
+    for sobj in sobj_resp:
+        if sobj.get('queryable'):
+            sobjects.append(sobj.get('name'))
+    print sobjects
+
+    return render(request, 'data/query_form.html', {'query_form': query_form, 'sobjects': sobjects})
 
 def soql(request):
     access_token = request.session.get('access_token')
     header = {'Authorization': 'Bearer %s' % access_token}
     params = {'q' : request.POST.get('query')}
-    #url = request.session.get('target') + '/services/data/v20.0/query'
-    url = 'https://na17.salesforce.com/services/data/v20.0/query'
+    url = request.session.get('target') + '/services/data/v29.0/query'
     response = requests.get(url, headers=header, params=params)
 
     print response.content
-    records = json.loads(response.content)
+    content = json.loads(response.content)
+    records = content.get('records')
+    fields = records[0].keys()
+    #delete the unwanted attributes entry
+    del fields[0]
 
-    return HttpResponse('success')
+    return render(request, 'data/query_results.html', {'fields': fields, 'records': records})
