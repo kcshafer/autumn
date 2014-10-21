@@ -8,7 +8,6 @@ from autumn.data.forms import QueryForm
 from autumn.frisbee import Frisbee 
 
 def query(request):
-    query_form = QueryForm()
     frisbee = Frisbee(request)
     sobj_resp = frisbee.get_sobjects()
 
@@ -16,13 +15,13 @@ def query(request):
     for sobj in sobj_resp:
         if sobj.get('queryable'):
             sobjects.append(sobj.get('name'))
-    print sobjects
 
-    return render(request, 'data/query_form.html', {'query_form': query_form, 'sobjects': sobjects})
+    return render(request, 'data/query_form.html', {'sobjects': sobjects})
 
 def soql(request):
     access_token = request.session.get('access_token')
     header = {'Authorization': 'Bearer %s' % access_token}
+    print request.POST
     params = {'q' : request.POST.get('query')}
     url = request.session.get('target') + '/services/data/v29.0/query'
     response = requests.get(url, headers=header, params=params)
@@ -35,3 +34,10 @@ def soql(request):
     del fields[0]
 
     return render(request, 'data/query_results.html', {'fields': fields, 'records': records})
+
+def fields(request):
+    frisbee = Frisbee(request)
+    response = frisbee.get_object_fields('Account')
+    print response
+
+    return HttpResponse(json.dumps(response))

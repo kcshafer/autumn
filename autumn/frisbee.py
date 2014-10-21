@@ -13,3 +13,10 @@ class Frisbee(object):
         response = requests.get(url, headers=self.header)
         content = json.loads(response.content)
         return content.get('sobjects')
+
+    def get_object_fields(self, sobject):
+        url = "%s/services/data/v29.0/sobjects/%s/describe" % (self.target, sobject)
+        response = requests.get(url, headers=self.header)
+        content = json.loads(response.content)
+        print content
+        return content.get('fields')

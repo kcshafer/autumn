@@ -6,4 +6,5 @@ from autumn.data import views
 urlpatterns = patterns('',
     url(r'^query', views.query),
     url(r'^soql', views.soql),
+    url(r'^fields', views.fields),
 )

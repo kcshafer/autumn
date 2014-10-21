@@ -4,15 +4,66 @@
     </head>
     <body>
         {% include 'common/navigation.html' %}
-        <form action="/data/soql/" method="post">
+        <form action="/data/soql/"class="form-horizontal" role="form" method="post" id="query_form" style="width: 400px; margin-left: 25%;">
             {% csrf_token %}
-            <select>
-                {% for sobj in sobjects %}
-                    <option value="{{sobj}}">{{sobj}}</option>
-                {% endfor %}
-            </select>
-            {{ query_form }}
-            <input type="submit" value="Query" />
+            <div class="form-group">
+                <label for="sobjects">Choose Object</label>
+                <select id="sobjects"  class="query_comp form-control">
+                    {% for sobj in sobjects %}
+                        <option value="{{sobj}}">{{sobj}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="form-group">
+                <label for="fields">Add fields</label>
+
+                <select id="fields" multiple class="query_comp form-control">
+                </select>
+            </div>
+            <div id="form-group">
+                <label for="query">Query</label>
+                <textarea id="query" class="form-control" form="query_form" name="query"></textarea>
+            </div>
+              <button type="submit" class="btn btn-default">Submit</button>
         </form>
+        <div id="q_res">
+        </div>
+        
+        <script id="FieldsOptionTemplate" type="text/x-jquery-tmpl">
+            <option value="${name}">${name}</option>
+        </script>
+        
+        <script>
+            $("#sobjects").click(function(){
+                $.ajax({
+                        type:"GET",
+                        beforeSend: function (xhr, settings)
+                        {
+                            xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                        },
+                        url: "/data/fields",
+                        success: function(response) {
+                            $.each($.parseJSON(response), function(){
+                                $("#FieldsOptionTemplate" ).tmpl(this).appendTo("#fields");
+                            });
+                        }
+                })
+            });
+
+            $(".query_comp").change(function(){
+                sobject = $("#sobjects option:selected").text();
+                fields = ''
+                $.each($("#fields option:selected"), function(){
+                    fields+=this.text + ',';
+                });
+
+                console.log(fields);
+
+                query = 'SELECT ' + fields.substring(0, fields.length - 1) + ' FROM ' + sobject;
+                console.log(query);
+                $("#query").val(query);
+            });
+
+        </script>
     </body>
 </html>
