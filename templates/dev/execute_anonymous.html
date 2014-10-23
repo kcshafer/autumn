@@ -1,0 +1,32 @@
+<html>
+    <head>
+        {% include 'common/header.html' %}
+    </head>
+    <body>
+        {% include 'common/navigation.html' %}
+        <textarea id="apex_block"></textarea>
+        <button type="submit" id="execute" class="btn btn-default">Execute</button>
+        <ul id="log">
+        </ul>
+    </body>
+    <script>
+        $("#execute").click(function(){
+            console.log('kc');
+            $.ajax({
+                type:"POST",
+                beforeSend: function (xhr, settings)
+                {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                },
+                url: "/dev/executeanonymous",
+                data: {'apex': $("#apex_block").val()},
+                success: function(response) {
+                    $.each($.parseJSON(response), function(){
+                        console.log(this);
+                        $('#log').append('<li>' + this + '</li>');
+                }   );
+                }
+            })
+        });
+    </script>
+</html>

@@ -17,7 +17,9 @@ urlpatterns = patterns('',
     url(r'^callback/', auth_views.handle_callback),
     url(r'^home/', home),
     
-    url(r'^data/', include('autumn.data.urls')), # admin app
+    url(r'^data/', include('autumn.data.urls')),
+    url(r'^dev/', include('autumn.dev.urls')), 
+
 
     url(r'login/', auth_views.authentication_landing),
 )
