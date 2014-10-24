@@ -4,7 +4,6 @@ import requests
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from autumn.data.forms import QueryForm
 from autumn.frisbee import Frisbee 
 
 def query(request):
@@ -21,7 +20,7 @@ def query(request):
 def soql(request):
     access_token = request.session.get('access_token')
     header = {'Authorization': 'Bearer %s' % access_token}
-    print request.POST
+
     params = {'q' : request.POST.get('query')}
     url = request.session.get('target') + '/services/data/v29.0/query'
     response = requests.get(url, headers=header, params=params)

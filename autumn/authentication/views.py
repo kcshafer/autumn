@@ -20,6 +20,14 @@ def handle_callback(request):
     resp = requests.post('https://login.salesforce.com/services/oauth2/token?grant_type=authorization_code&code=%s&client_id=%s&client_secret=%s&redirect_uri=%s' % (code, client_id, client_secret, redirect_uri))
     content = json.loads(resp.content)
 
+    #id service 
+    id_response = requests.get(content.get('id'), headers={'Authorization': 'Bearer %s' % content.get('access_token')})
+    user = json.loads(id_response.content)
+
+    request.session['name'] = user.get('display_name')
+    request.session['email'] = user.get('email')
+    request.session['username'] = user.get('username')
+    request.session['user_id'] = user.get('user_id')
     request.session['access_token'] = content.get('access_token')
     request.session['target'] = content.get('instance_url')
     return HttpResponseRedirect('/data/query')
