@@ -13,9 +13,12 @@ def execute_anonymous(request):
     #### look for any existing TraceFlags and get rid of them if they exist ####
     query = "SELECT Id FROM TraceFlag WHERE TracedEntityId = '%s' Limit 1" % request.session.get('user_id')
     query_response = frisbee.query(query, tooling=True)
-    if query_response.get('records'):
-        trace_id = query_response.get('records')[0].get('Id')
-        frisbee.delete('TraceFlag', trace_id, tooling=True)
+    try:
+        if query_response:
+            trace_id = query_response.get('records')[0].get('Id')
+            frisbee.delete('TraceFlag', trace_id, tooling=True)
+    except:
+        print "query fail"
 
     #### set trace flag ####
     TRACE_FLAG['ExpirationDate'] = (datetime.now() + timedelta(1)).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -33,9 +36,9 @@ def execute_anonymous(request):
 
     #### request log body ####
     log_response = frisbee.debug_log(log_id)
-    lines = log_response.content.split('\n')
+    #lines = log_response.content.split('\n')
     
-    return HttpResponse(json.dumps(lines))
+    return HttpResponse(json.dumps(log_response.content))
 
 def execute(request):
     return render(request, 'dev/execute_anonymous.html')

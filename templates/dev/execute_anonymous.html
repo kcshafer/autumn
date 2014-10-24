@@ -1,15 +1,69 @@
 <html>
     <head>
         {% include 'common/header.html' %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js"></script>
+
+        <style type="text/css" media="screen">
+            .editor { 
+                position: absolute;
+                top: 140;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                width: 500px;
+            }
+
+            #results {
+                position: absolute;
+                left: 520;
+            }
+        </style>
     </head>
     <body>
         {% include 'common/navigation.html' %}
-        <textarea id="apex_block"></textarea>
         <button type="submit" id="execute" class="btn btn-default">Execute</button>
+        <div id="editor" class="editor">
+        </div>
+        <div id="results" class="editor">
+        </div>
         <ul id="log">
         </ul>
     </body>
     <script>
+        var editor, results;
+        $(document).ready(function(){
+            editor = ace.edit("editor");
+            editor.setTheme("ace/theme/monokai");
+            editor.getSession().setMode("ace/mode/java");
+
+            results = ace.edit("results");
+            results.setTheme("ace/theme/monokai");
+            results.getSession().setMode("ace/mode/java");
+
+            editor.commands.addCommand({
+                name: 'myCommand',
+                bindKey: {win: 'Ctrl-B',  mac: 'Command-B'},
+                exec: function(editor) {
+                    console.log('build')
+                    console.log(editor.getValue());
+                    $.ajax({
+                        type:"POST",
+                        beforeSend: function (xhr, settings)
+                        {
+                            xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                        },
+                        url: "/dev/executeanonymous",
+                        data: {'apex': editor.getValue()},
+                        success: function(response) {
+                            console.log(response);
+                            results.setValue($.parseJSON(response));
+                        }
+                    })
+                },
+                readOnly: true 
+            });
+        });
+
         $("#execute").click(function(){
             console.log('kc');
             $.ajax({
@@ -19,12 +73,10 @@
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
                 },
                 url: "/dev/executeanonymous",
-                data: {'apex': $("#apex_block").val()},
+                data: {'apex': editor.getValue()},
                 success: function(response) {
-                    $.each($.parseJSON(response), function(){
-                        console.log(this);
-                        $('#log').append('<li>' + this + '</li>');
-                }   );
+                    console.log(response);
+                    results.setValue($.parseJSON(response));
                 }
             })
         });
