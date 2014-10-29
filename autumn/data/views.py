@@ -18,25 +18,17 @@ def query(request):
     return render(request, 'data/query_form.html', {'sobjects': sobjects})
 
 def soql(request):
-    access_token = request.session.get('access_token')
-    header = {'Authorization': 'Bearer %s' % access_token}
+    print request.GET
+    query = request.GET.get('query')
+    frisbee = Frisbee(request)
+    response = frisbee.query(query)
+    print response
+    records = response.get('records')
 
-    params = {'q' : request.POST.get('query')}
-    url = request.session.get('target') + '/services/data/v29.0/query'
-    response = requests.get(url, headers=header, params=params)
-
-    print response.content
-    content = json.loads(response.content)
-    records = content.get('records')
-    fields = records[0].keys()
-    #delete the unwanted attributes entry
-    del fields[0]
-
-    return render(request, 'data/query_results.html', {'fields': fields, 'records': records})
+    return HttpResponse(json.dumps(records))
 
 def fields(request):
     frisbee = Frisbee(request)
-    response = frisbee.get_object_fields('Account')
-    print response
+    response = frisbee.get_object_fields(request.GET.get('sobject'))
 
     return HttpResponse(json.dumps(response))

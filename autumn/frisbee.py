@@ -18,7 +18,7 @@ class Frisbee(object):
         url = "%s/services/data/v29.0/sobjects/%s/describe" % (self.target, sobject)
         response = requests.get(url, headers=self.header)
         content = json.loads(response.content)
-        print content
+
         return content.get('fields')
 
     def execute_anonymous(self, apex):

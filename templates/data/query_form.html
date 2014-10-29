@@ -1,11 +1,16 @@
 <html>
     <head>
         {% include 'common/header.html' %}
+        <style>
+            #query-form {
+                width: 400px;
+                margin-left: 25%;
+            }
+        </style>
     </head>
     <body>
         {% include 'common/navigation.html' %}
-        <form action="/data/soql/"class="form-horizontal" role="form" method="post" id="query_form" style="width: 400px; margin-left: 25%;">
-            {% csrf_token %}
+        <div id="query-form">
             <div class="form-group">
                 <label for="sobjects">Choose Object</label>
                 <select id="sobjects"  class="query_comp form-control">
@@ -14,25 +19,39 @@
                     {% endfor %}
                 </select>
             </div>
+
             <div id="form-group">
                 <label for="fields">Add fields</label>
 
                 <select id="fields" multiple class="query_comp form-control">
                 </select>
             </div>
+
             <div id="form-group">
                 <label for="query">Query</label>
                 <textarea id="query" class="form-control" form="query_form" name="query"></textarea>
             </div>
-              <button type="submit" class="btn btn-default">Submit</button>
-        </form>
-        <div id="q_res">
+
+            <button type="button" id="query-btn" class="btn btn-default">Query</button>
         </div>
+        
+        <table class="table" id="q_res">
+            <thead>
+            </thead>
+
+            <tbody>
+            </tbody>
+        </table>
         
         <script id="FieldsOptionTemplate" type="text/x-jquery-tmpl">
             <option value="${name}">${name}</option>
         </script>
+
+        <script id="QueryFieldsTemplate" type="text/x-jquery-tmpl">
+            <th>${value}</th>
+        </script>
         
+
         <script>
             $("#sobjects").click(function(){
                 $.ajax({
@@ -42,6 +61,7 @@
                             xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
                         },
                         url: "/data/fields",
+                        data: {"sobject": $("#sobjects option:selected").text()},
                         success: function(response) {
                             $.each($.parseJSON(response), function(){
                                 $("#FieldsOptionTemplate" ).tmpl(this).appendTo("#fields");
@@ -62,6 +82,39 @@
                 query = 'SELECT ' + fields.substring(0, fields.length - 1) + ' FROM ' + sobject;
                 console.log(query);
                 $("#query").val(query);
+            });
+
+            $("#query-btn").on('click', function(){
+                var fields = []
+                $.each($("#fields option:selected"), function(){
+                    console.log(this);
+                    fields.push(this.text);
+                    $("#QueryFieldsTemplate").tmpl(this).appendTo("#q_res thead");
+                });
+                $.ajax({
+                    type:"GET",
+                    beforeSend: function (xhr, settings)
+                    {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                    },
+                    url: "/data/soql",
+                    data: {"query": $("#query").val()},
+                    success: function(response) {
+                        console.log(response);
+                        $.each($.parseJSON(response), function(i,r){
+                            var row = '<tr>';
+                            console.log(row);
+                            console.log(r);
+                            $.each(fields, function(i,f){
+                                row+='<td>' + r[f] + '</td>';
+                                console.log(f);
+                            });
+                            row+='</tr>';
+                            console.log(row);
+                            $("#q_res tbody").append(row);
+                        });
+                    }
+                })
             });
 
         </script>
