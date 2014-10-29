@@ -1,0 +1,163 @@
+<html>
+    <head>
+        {% include 'common/header.html' %}
+    </head>
+    <body>
+        {% include 'common/navigation.html' %}
+        <h1>Run Tests</h1>
+        <div style="width: 400px; margin-left: 25%;" id="tests-form">
+            {% csrf_token %}
+            <table>
+                <tr>
+                    <td>
+                        <div id="form-group">
+                            <label for="test-classes">Tests Classes</label>
+
+                            <select id="test-classes" multiple class="form-control">
+                                {% for c in test_classes %}
+                                    <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-default btn-lg" id="select-classes">
+                          <span class="glyphicon glyphicon-chevron-right"></span> 
+                        </button>
+                    </td>
+                    <td>
+                        <div id="form-group">
+                            <label for="test-classes-selected">Selected Tests</label>
+                            <select id="test-classes-selected" multiple class="form-control">   
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <button type="btn" id="run-tests" class="btn btn-default">Run Tests</button>
+
+        <div class="panel-group" id="test-results">
+        </div>
+    </body>
+    <script id="ClassOptionTemplate" type="text/x-jquery-tmpl">
+        <option value="${id}">${name}</option>
+    </script>
+
+    <script id="TestClassItems" type="text/x-jquery-tmpl">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#${ApexClassId}">
+                        ${ApexClassId} - ${name}
+                    </a>
+                </h4>
+            </div>
+            <div id="${ApexClassId}" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <table class="table" id="${ApexClassId}-test-methods">
+                        <thead>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                            <th>Stack Trace</th>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script id="TestClassResults" type="text/x-jquery-tmpl">
+        <tr class='${status}'>
+            <td>${MethodName}</td>
+            <td>${Outcome}</td>
+            <td>${Message}</td>
+            <td>${StackTrace}</td>
+        </tr>
+    </script>
+
+    <script>
+        var class_names = {}
+        $("#select-classes").click(function(){
+            $.each($("#test-classes option:selected"), function(){
+                console.log(this.val);
+                this.remove();
+                class_names[$(this).attr('value')] = this.text;
+                cls = {'id': $(this).attr('value'), 'name': this.text};
+                console.log(cls);
+                $("#ClassOptionTemplate").tmpl(cls).appendTo("#test-classes-selected");
+            });
+       });
+
+       $("#run-tests").click(function(){
+            var class_ids = []
+            $.each($("#test-classes-selected option"), function(){
+                class_ids.push($(this).attr('value'));
+            });
+            $.ajax({
+                type:"POST",
+                beforeSend: function (xhr, settings)
+                {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                },
+                url: "/dev/runtests",
+                data: {'class_ids': class_ids},
+                success: function(response) {
+                    console.log(response);
+                    get_test_queue_items(response);
+                }
+            })
+        });
+
+       function get_test_queue_items(id) {
+            console.log('kc');
+            $.ajax({
+                type:"GET",
+                beforeSend: function (xhr, settings)
+                {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                },
+                url: "/dev/testitems",
+                data: {'id': id},
+                success: function(response) {
+                    console.log(response);
+                    $.each($.parseJSON(response), function(){
+                        console.log(this);
+                        var cls = this;
+                        cls['name'] = class_names[this.ApexClassId];
+                        console.log(cls);
+                        $("#TestClassItems").tmpl(cls).appendTo("#test-results");
+                    });
+                    get_test_results(id);
+                }
+            }) 
+        }
+
+        function get_test_results(id) {
+            $.ajax({
+                type:"GET",
+                beforeSend: function (xhr, settings)
+                {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                },
+                url: "/dev/testresults",
+                data: {'id': id},
+                success: function(response) {
+                    console.log(response);
+                    $.each($.parseJSON(response), function(){
+                        if(this.Outcome == 'Pass') {
+                            this.status = 'success';
+                        } else {
+                            this.status = 'danger';
+                        }
+
+                        $("#TestClassResults").tmpl(this).appendTo("#" + this.ApexClassId + "-test-methods");
+                    });
+                }
+            }) 
+        }
+    </script>
+</html>

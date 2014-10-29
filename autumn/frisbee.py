@@ -75,3 +75,20 @@ class Frisbee(object):
 
         return response
 
+
+    def run_tests(self, ids):
+        id_str = ''
+        print ids
+        for id in ids:
+            id_str = id_str + id + ','
+        id_str = id_str.strip(',')
+        print id_str
+
+        url = self.target + "/services/data/v30.0/tooling/runTestsAsynchronous/?"
+        response = requests.get(url, headers=self.header, params={'classids': id_str})
+
+        content = json.loads(response.content)
+        return content
+
+
+
