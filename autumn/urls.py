@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     
     url(r'^data/', include('autumn.data.urls')),
     url(r'^dev/', include('autumn.dev.urls')), 
+    url(r'^org/', include('autumn.org.urls')),
 
 
     url(r'login/', auth_views.authentication_landing),

@@ -1,0 +1,60 @@
+<html>
+    <head>
+        {% include 'common/header.html' %}
+        <style>
+            #query-form {
+                width: 400px;
+                margin-left: 25%;
+            }
+
+            .field-label {
+                font-weight: bold;
+            }
+        </style>
+        <script>
+            var sobject_base = Handlebars.compile(templates.sobject_overview_structure);
+            var download_template = Handlebars.compile(templates.download_form_template);
+        </script>
+    </head>
+    <body>
+        {% include 'common/navigation.html' %}
+        <div id="sobject-form">
+            <div class="form-group">
+                <label for="sobjects">Choose Object</label>
+                <select id="sobjects"  class="query_comp form-control">
+                    {% for sobj in sobjects %}
+                        <option value="{{sobj}}">{{sobj}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="button" id="generate-btn" class="btn btn-default">Generate</button>
+
+        <div id="sobject-overview">
+        </div>
+        <script>
+            var sobject;
+            $("#generate-btn").on('click', function(){
+                console.log($("#sobjects option:selected").attr('value'));
+                $.ajax({
+                    type:"GET",
+                    beforeSend: function (xhr, settings)
+                    {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token}}');
+                    },
+                    url: "/org/generateobject",
+                    data: {"sobject": $("#sobjects option:selected").attr('value')},
+                    success: function(response) {
+                        console.log(response);
+                        $("#raw_sobject").val(response);
+                        sobject = $.parseJSON(response);
+                        $("#sobject-overview").append(sobject_base(sobject));
+                        $("#sobject-content").append(download_template({'response': response}));
+                        $("#overview-form").append(
+                            "{% csrf_token %}");
+                    }
+                })
+            });
+        </script>
+    </body>
+</html>

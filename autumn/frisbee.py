@@ -1,5 +1,11 @@
+from lxml import etree
 import json
 import requests
+
+NS = {
+        "soapenv": "http://schemas.xmlsoap.org/soap/envelope/",
+        "urn":     "urn:enterprise.soap.sforce.com"
+    }
 
 class Frisbee(object):
 
@@ -7,6 +13,8 @@ class Frisbee(object):
         self.access_token = request.session.get('access_token')
         self.target = request.session.get('target')
         self.header = {'Authorization': 'Bearer %s' % self.access_token}
+        self.org_id = request.session.get('org_id')
+        print self.target
 
     def get_sobjects(self):
         url = self.target + '/services/data/v29.0/sobjects'
@@ -55,7 +63,7 @@ class Frisbee(object):
 
 
     def query(self, query, tooling=False):
-        url = self.target + "/services/data/v29.0/"
+        url = self.target + "/services/data/v30.0/"
         if tooling:
             url = url + 'tooling/query/'
         else:
@@ -90,5 +98,12 @@ class Frisbee(object):
         content = json.loads(response.content)
         return content
 
+    def describe_sobject(self, sobj):
+        describe_xml = etree.parse('autumn/frisbee/soap/describe.xml')
+        describe_xml.xpath("soapenv:Header/urn:SessionHeader/urn:sessionId", namespaces=NS)[0].text = self.access_token 
+        describe_xml.xpath("soapenv:Body/urn:describeSObject/urn:sObjectType", namespaces=NS)[0].text = sobj
+        url = self.target + "/services/Soap/c/27.0/" + self.org_id
+        print url
+        response = requests.post(url, headers={"content-type": "text/xml", "SOAPAction": '""'}, data=etree.tostring(describe_xml, pretty_print=True))
 
-
+        return response.content

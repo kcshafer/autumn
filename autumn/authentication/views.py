@@ -30,6 +30,8 @@ def handle_callback(request):
     request.session['user_id'] = user.get('user_id')
     request.session['access_token'] = content.get('access_token')
     request.session['target'] = content.get('instance_url')
+    request.session['org_id'] = user.get('organization_id')
+
     return HttpResponseRedirect('/data/query')
 
 #clears session data with salesforce access token
