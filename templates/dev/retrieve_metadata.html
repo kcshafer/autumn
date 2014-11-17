@@ -1,0 +1,25 @@
+<html>
+    <head>
+        {% include 'common/header.html' %}
+        <style>
+            #metadata-form {
+                width: 400px;
+                margin-left: 25%;
+            }
+        </style>
+    </head>
+    <body>
+        {% include 'common/navigation.html' %}
+        <form id="metadata-form" method="post" action="/dev/downloadmetadata">
+            {% csrf_token %}
+            <label for="sobjects">Apex Classes</label>
+            <select id="classes" name="ApexClass" multiple class="cls-select form-control">
+                {% for cls in classes %}
+                    <option value="{{cls.Name}}">{{cls.Name}}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" id="submit">Download</button>
+        </form>
+    </body>
+</html>

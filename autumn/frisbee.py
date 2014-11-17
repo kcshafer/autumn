@@ -1,11 +1,24 @@
+import base64
 from lxml import etree
 import json
 import requests
 
 NS = {
         "soapenv": "http://schemas.xmlsoap.org/soap/envelope/",
-        "urn":     "urn:enterprise.soap.sforce.com"
+        "urn"    : "urn:enterprise.soap.sforce.com"
     }
+
+META_NS = {
+        "soapenv" : "http://schemas.xmlsoap.org/soap/envelope/", 
+        "ns1"     : "http://soap.sforce.com/2006/04/metadata", 
+        "ns2"     : "http://soap.sforce.com/2006/04/metadata"
+    }
+
+META_NS_RESPONSE = {
+    "xmlns"   : "http://soap.sforce.com/2006/04/metadata",
+    "soapenv" : "http://schemas.xmlsoap.org/soap/envelope/"
+
+}
 
 class Frisbee(object):
 
@@ -14,6 +27,7 @@ class Frisbee(object):
         self.target = request.session.get('target')
         self.header = {'Authorization': 'Bearer %s' % self.access_token}
         self.org_id = request.session.get('org_id')
+        self.user_id = request.session.get('user_id')
         print self.target
 
     def get_sobjects(self):
@@ -107,3 +121,38 @@ class Frisbee(object):
         response = requests.post(url, headers={"content-type": "text/xml", "SOAPAction": '""'}, data=etree.tostring(describe_xml, pretty_print=True))
 
         return response.content
+
+    def retrieve_request(self, package):
+        url = self.target + "/services/Soap/m/31.0/" + self.org_id
+        package.xpath("soapenv:Header/ns1:SessionHeader/ns1:sessionId", namespaces=META_NS)[0].text = self.access_token
+        package_str = '<?xml version="1.0" encoding="UTF-8"?>' + etree.tostring(package)
+        print etree.tostring(package, pretty_print=True)
+        response = requests.post(url, headers={"content-type": "text/xml", "SOAPAction": '""'}, data=package_str)
+        retrieve_response = etree.fromstring(response.content)
+        print retrieve_response
+        print response.content
+        async_id = retrieve_response.xpath("soapenv:Body/xmlns:retrieveResponse/xmlns:result/xmlns:id", namespaces=META_NS_RESPONSE)[0].text
+        print async_id
+
+        return async_id
+
+    def check_retrieve_status(self, id):
+        url = self.target + "/services/Soap/m/31.0/" + self.org_id
+        crs_xml = etree.parse('autumn/frisbee/soap/check_retrieve_status.xml')
+        crs_xml.xpath("soapenv:Header/ns1:SessionHeader/ns1:sessionId", namespaces=META_NS)[0].text = self.access_token
+        crs_xml.xpath("soapenv:Body/ns2:checkRetrieveStatus/ns2:asyncProcessId", namespaces=META_NS)[0].text = id
+        crs_str = '<?xml version="1.0" encoding="UTF-8"?>' + etree.tostring(crs_xml)
+        response = requests.post(url, headers={"content-type": "text/xml", "SOAPAction": '""'}, data=crs_str)
+        status_response = etree.fromstring(response.content)
+
+        print response.content
+
+        return status_response
+
+    def binary_to_zip(self, zip_response):
+        ''' Handle the SF Metadata API checkRetrieveStatus zip file response '''
+
+        decoded_file = base64.b64decode(zip_response)
+        zip_file = open('%s.zip' % (self.user_id), 'w')
+        zip_file.write(decoded_file)
+        zip_file.close()

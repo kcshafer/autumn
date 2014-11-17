@@ -10,4 +10,6 @@ urlpatterns = patterns('',
     url(r'^runtests', views.run_tests),
     url(r'^testitems', views.retrieve_test_items),
     url(r'^testresults', views.retrieve_test_results),
+    url(r'^retrieve', views.retrieve_metadata),
+    url(r'^downloadmetadata', views.download_metadata),
 )
