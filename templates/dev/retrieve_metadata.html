@@ -12,10 +12,17 @@
         {% include 'common/navigation.html' %}
         <form id="metadata-form" method="post" action="/dev/downloadmetadata">
             {% csrf_token %}
-            <label for="sobjects">Apex Classes</label>
+            <label for="classes">Apex Classes</label>
             <select id="classes" name="ApexClass" multiple class="cls-select form-control">
                 {% for cls in classes %}
                     <option value="{{cls.Name}}">{{cls.Name}}</option>
+                {% endfor %}
+            </select>
+
+            <label for="sobjects">Custom Objects</label>
+            <select id="objects" name="CustomObject" multiple class="obj-select form-control">
+                {% for obj in sobjects %}
+                    <option value="{{obj}}">{{obj}}</option>
                 {% endfor %}
             </select>
 

@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 import json
+from lxml import etree
 import requests
 
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from autumn.frisbee import Frisbee 
+from autumn.frisbee import Frisbee, META_NS, META_NS_RESPONSE
 
 def execute(request):
     return render(request, 'dev/execute_anonymous.html')
@@ -83,6 +84,61 @@ def retrieve_test_results(request):
 
     return HttpResponse(json.dumps(response.get('records')))
 
+def retrieve_metadata(request):
+    metadata = {}
+    frisbee = Frisbee(request)
+    cls_response = frisbee.query('SELECT Id, Name FROM ApexClass')
+    object_response = frisbee.query('SELECT DeveloperName FROM CustomObject')
+    metadata['classes'] = cls_response.get('records')
+    all_sobjects = frisbee.get_sobjects()
+    sobjects = []
+    for sobj in all_sobjects:
+        if sobj.get('retrieveable') == True:
+            sobjects.append(sobj.get('name'))
+
+    metadata['sobjects'] = sobjects
+
+    return render(request, 'dev/retrieve_metadata.html', metadata)
+
+def download_metadata(request):
+    print "POST VALUES"
+    print request.POST
+    package = etree.parse('autumn/frisbee/soap/package.xml')
+    package = package.getroot()
+    for mt in METADATA_TYPES:
+        pkg_member = etree.Element('types')
+        name = etree.Element('name')
+        name.text = mt
+        pkg_member.append(name)
+        for member in request.POST.getlist(mt):
+            print member
+            members = etree.Element('members')
+            members.text = member
+            pkg_member.append(members)
+        package.xpath('soapenv:Body/ns1:retrieve/ns1:RetrieveRequest/ns2:unpackaged', namespaces=META_NS)[0].append(pkg_member)
+
+    frisbee = Frisbee(request)
+    async_id = frisbee.retrieve_request(package)
+    status_xml = None
+    while True:
+        status_xml = frisbee.check_retrieve_status(async_id)
+        print "=====================STATUS=========================="
+        print status_xml.xpath('soapenv:Body/xmlns:checkRetrieveStatusResponse/xmlns:result/xmlns:done', namespaces=META_NS_RESPONSE)[0].text
+        if status_xml.xpath('soapenv:Body/xmlns:checkRetrieveStatusResponse/xmlns:result/xmlns:done', namespaces=META_NS_RESPONSE)[0].text == 'true':
+            break
+    print "================ZIP FILE============================="
+    zip_binary = status_xml.xpath('soapenv:Body/xmlns:checkRetrieveStatusResponse/xmlns:result/xmlns:zipFile', namespaces=META_NS_RESPONSE)[0].text
+    frisbee.binary_to_zip(zip_binary)
+    
+    f = open('%s.zip' % (request.session.get('user_id')), 'r')
+
+    response = HttpResponse(mimetype='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="retrieve.zip"'
+    response.write(f.read())
+    
+    return response
+
+
 TRACE_FLAG = {
     'ApexCode': 'Debug',
     'ApexProfiling': 'Debug',
@@ -93,3 +149,8 @@ TRACE_FLAG = {
     'Visualforce': 'Debug',
     'Workflow': 'Debug'
 }
+
+METADATA_TYPES = [
+    'ApexClass',
+    'CustomObject',
+]
